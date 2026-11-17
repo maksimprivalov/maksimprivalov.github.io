@@ -1,0 +1,34 @@
+---
+import '../styles/global.css';
+import { SITE } from '../config';
+import { url } from '../lib/url';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = SITE.title, description = SITE.description } = Astro.props;
+// Astro.url.pathname already includes the base path.
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+---
+
+<!doctype html>
+<html lang={SITE.lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href={url('favicon.svg')} />
+    <meta name="theme-color" content="#161616" />
+    {SITE.verification.google && (
+      <meta name="google-site-verification" content={SITE.verification.google} />
+    )}
+    {SITE.verification.bing && <meta name="msvalidate.01" content={SITE.verification.bing} />}
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

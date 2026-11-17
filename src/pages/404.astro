@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../config';
+import { url } from '../lib/url';
+---
+
+<BaseLayout title={`Page not found | ${SITE.name}`} description="This page does not exist.">
+  <main class="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center px-6 py-24">
+    <p class="font-mono text-sm text-accent">404</p>
+    <h1 class="mt-3 text-3xl font-semibold tracking-tight">Page not found</h1>
+    <p class="mt-4 text-muted">The page you're looking for doesn't exist or has moved.</p>
+    <a
+      href={url()}
+      class="mt-8 self-start underline decoration-accent underline-offset-4 hover:text-accent"
+    >
+      Back to home
+    </a>
+  </main>
+</BaseLayout>
