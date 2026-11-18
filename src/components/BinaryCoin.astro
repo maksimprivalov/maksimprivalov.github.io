@@ -1,0 +1,205 @@
+---
+/**
+ * Hero visual: a coin made of 0s and 1s, spinning about its vertical axis.
+ * Faces show currency symbols, the rim and edge are drawn in bits, and bits flip over time.
+ * Canvas 2D, no dependencies. Pauses off-screen and in hidden tabs; static under reduced motion.
+ */
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<div class:list={['relative aspect-square w-full', className]} data-binary-coin>
+  <canvas class="absolute inset-0 size-full" aria-hidden="true"></canvas>
+  <p class="sr-only">
+    Decorative animation: a coin made of binary digits, zeros and ones, rotating and showing
+    currency symbols on its faces.
+  </p>
+</div>
+
+<script>
+  const SYMBOLS = ['$', '€', '£'];
+  const COLOR = { accent: '16 185 129', text: '237 237 237', muted: '138 138 138' };
+  const MASK = 64; // symbol mask resolution
+  const FPS = 30;
+
+  type Cell = { bit: 0 | 1 };
+
+  function symbolMask(symbol: string): Uint8Array {
+    const c = document.createElement('canvas');
+    c.width = c.height = MASK;
+    const ctx = c.getContext('2d', { willReadFrequently: true })!;
+    ctx.fillStyle = '#fff';
+    ctx.font = `800 ${MASK * 0.66}px "Geist Variable", Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(symbol, MASK / 2, MASK / 2 + MASK * 0.03);
+    const data = ctx.getImageData(0, 0, MASK, MASK).data;
+    const mask = new Uint8Array(MASK * MASK);
+    for (let i = 0; i < mask.length; i++) mask[i] = data[i * 4 + 3]! > 100 ? 1 : 0;
+    return mask;
+  }
+
+  async function init(root: HTMLElement) {
+    const canvas = root.querySelector('canvas')!;
+    const ctx = canvas.getContext('2d')!;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    await document.fonts.ready;
+    const masks = SYMBOLS.map(symbolMask);
+
+    let cols = 0;
+    let rows = 0;
+    let cell = 0;
+    let width = 0;
+    let height = 0;
+    let cells: Cell[] = [];
+
+    function resize() {
+      ({ width, height } = root.getBoundingClientRect());
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // ~46 cells across: enough resolution for a readable symbol, still cheap to draw.
+      cell = Math.min(10, Math.max(7, width / 46));
+      cols = Math.floor(width / cell);
+      rows = Math.floor(height / cell);
+      cells = Array.from({ length: cols * rows }, () => ({
+        bit: Math.random() < 0.5 ? 0 : 1,
+      }));
+      ctx.font = `500 ${cell * 0.92}px "JetBrains Mono Variable", ui-monospace, monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+    }
+
+    // theta: rotation about the vertical axis; flip: probability a bit flips per frame.
+    function draw(theta: number, flip: number) {
+      ctx.clearRect(0, 0, width, height);
+
+      const R = Math.min(cols, rows) * 0.4; // coin radius, in cells
+      const cos = Math.cos(theta);
+      const sin = Math.sin(theta);
+      const absCos = Math.max(Math.abs(cos), 0.015);
+      const thick = R * 0.14 * sin; // edge offset on screen
+      const light = 0.4 + 0.6 * Math.abs(cos);
+      // The visible face changes every half turn; each face gets the next symbol.
+      const face = Math.floor((theta + Math.PI / 2) / Math.PI);
+      const mask = masks[((face % masks.length) + masks.length) % masks.length]!;
+
+      const cx = cols / 2;
+      const cy = rows / 2;
+      const ox = (width - cols * cell) / 2 + cell / 2;
+      const oy = (height - rows * cell) / 2 + cell / 2;
+
+      for (let row = 0; row < rows; row++) {
+        const y = row - cy + 0.5;
+        const half = Math.abs(y) <= R ? Math.sqrt(R * R - y * y) : -1; // face half-width before rotation
+        for (let col = 0; col < cols; col++) {
+          const c = cells[row * cols + col]!;
+          if (flip && Math.random() < flip) c.bit = c.bit ? 0 : 1;
+
+          const x = col - cx + 0.5 + thick / 2;
+          let rgb = COLOR.muted;
+          let alpha: number;
+
+          if (half >= 0 && Math.abs(x) <= half * absCos) {
+            // Visible face, un-projected. Each face is read from the viewer's side, so the
+            // symbol is never mirrored.
+            const u = x / absCos;
+            const r = Math.sqrt(u * u + y * y) / R;
+            const mx = Math.floor(((u / R) * 0.5 + 0.5) * (MASK - 1));
+            const my = Math.floor(((y / R) * 0.5 + 0.5) * (MASK - 1));
+            if (r > 0.88) {
+              rgb = COLOR.accent; // rim
+              alpha = 0.75 * light;
+            } else if (mask[my * MASK + mx]) {
+              rgb = COLOR.accent; // symbol
+              alpha = light;
+            } else if (r > 0.79 && r < 0.83) {
+              rgb = COLOR.accent; // inner ring
+              alpha = 0.3 * light;
+            } else {
+              rgb = COLOR.text; // face
+              alpha = 0.1 * light;
+            }
+          } else if (
+            half >= 0 &&
+            x >= Math.min(0, thick) - half * absCos &&
+            x <= Math.max(0, thick) + half * absCos
+          ) {
+            // Edge: everything swept between the front face and the offset back face.
+            rgb = COLOR.accent;
+            alpha = 0.45;
+          } else {
+            // Background field: faint bits fading out from the coin.
+            const d = Math.sqrt(x * x + y * y) / R;
+            alpha = d < 1.9 ? 0.09 * (1 - (d - 1) / 0.9) : 0;
+            if (alpha <= 0.01) continue;
+          }
+
+          ctx.fillStyle = `rgb(${rgb} / ${alpha.toFixed(3)})`;
+          ctx.fillText(c.bit ? '1' : '0', ox + col * cell, oy + row * cell);
+        }
+      }
+    }
+
+    resize();
+
+    if (reduced) {
+      draw(-0.45, 0);
+      new ResizeObserver(() => {
+        resize();
+        draw(-0.45, 0);
+      }).observe(root);
+      return;
+    }
+
+    let theta = -0.45;
+    let speed = 0.55; // rad/s
+    let target = 0.55;
+    let last = 0;
+    let raf = 0;
+    let visible = false;
+
+    function frame(now: number) {
+      raf = requestAnimationFrame(frame);
+      if (now - last < 1000 / FPS) return;
+      const dt = last ? Math.min((now - last) / 1000, 0.1) : 0;
+      last = now;
+      speed += (target - speed) * 0.08;
+      theta += speed * dt;
+      draw(theta, target > 1 ? 0.06 : 0.02);
+    }
+
+    const start = () => {
+      if (!raf && visible && !document.hidden) {
+        last = 0;
+        raf = requestAnimationFrame(frame);
+      }
+    };
+    const stop = () => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+    };
+
+    new IntersectionObserver(([entry]) => {
+      visible = entry!.isIntersecting;
+      if (visible) start();
+      else stop();
+    }).observe(root);
+    document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+    new ResizeObserver(() => {
+      resize();
+      draw(theta, 0);
+    }).observe(root);
+
+    // Hover: spin faster and flip more bits.
+    root.addEventListener('pointerenter', () => (target = 1.8));
+    root.addEventListener('pointerleave', () => (target = 0.55));
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-binary-coin]').forEach((el) => void init(el));
+</script>
