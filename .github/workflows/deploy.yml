@@ -20,21 +20,20 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # CV: compile cv/cv.tex -> public/cv.pdf (skipped until cv/cv.tex exists).
+      # CV: compile cv/main.tex (pdfLaTeX, needs cv/photo.jpg) -> public/cv.pdf.
       - name: Compile CV (LaTeX)
-        if: hashFiles('cv/cv.tex') != ''
         uses: xu-cheng/latex-action@v4
         with:
           working_directory: cv
-          root_file: cv.tex
+          root_file: main.tex
       - name: Publish CV PDF
-        if: hashFiles('cv/cv.tex') != ''
-        run: cp cv/cv.pdf public/cv.pdf
+        run: cp cv/main.pdf public/cv.pdf
 
       - name: Build site
         uses: withastro/action@v6
         with:
           node-version: 22
+          build-cmd: pnpm run cv:check && pnpm run build
 
   deploy:
     needs: build
