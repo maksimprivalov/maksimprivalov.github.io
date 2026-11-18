@@ -1,34 +1,54 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Container from '../components/ui/Container.astro';
+import Button from '../components/ui/Button.astro';
+import StatusBadge from '../components/ui/StatusBadge.astro';
+import SectionHeading from '../components/ui/SectionHeading.astro';
 import { SITE } from '../config';
+
+// TODO(phase 3): real section content from cv/cv.tex and GitHub READMEs.
+const sections = [
+  { id: 'projects', index: '01', label: 'Projects', title: 'Selected work' },
+  { id: 'experience', index: '02', label: 'Experience', title: 'Where I have worked' },
+  { id: 'writing', index: '03', label: 'Writing', title: 'Notes on payments engineering' },
+  { id: 'contact', index: '04', label: 'Contact', title: 'Get in touch' },
+];
 ---
 
 <BaseLayout>
-  <main class="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center px-6 py-24">
-    <p class="mb-8 inline-flex items-center gap-2 text-sm text-muted">
-      <span class="size-2 rounded-full bg-accent" aria-hidden="true"></span>
-      {SITE.status}
-    </p>
-    <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">{SITE.name}</h1>
-    <p class="mt-3 font-mono text-sm text-muted">Backend Engineer · FinTech</p>
-    <p class="mt-6 max-w-xl text-lg leading-relaxed text-text/90">
-      I build payment systems, ledgers and distributed backends in Java/Kotlin, Spring Boot, Rust
-      and Go.
-    </p>
-    <div class="mt-10 flex flex-wrap gap-3">
-      <a
-        href={SITE.github}
-        class="rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-bg transition-colors hover:bg-accent-hover"
-      >
-        GitHub
-      </a>
-      <a
-        href={`mailto:${SITE.email}`}
-        class="rounded-lg border border-line px-5 py-2.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent"
-      >
-        Email me
-      </a>
-    </div>
-    <p class="mt-16 font-mono text-xs text-muted">Site under construction.</p>
-  </main>
+  <section id="hero" aria-labelledby="hero-title" class="relative overflow-hidden">
+    <div class="glow -top-[28rem] left-1/2 -translate-x-1/2" aria-hidden="true"></div>
+    <Container class="relative pt-20 pb-24 md:pt-28 md:pb-32">
+      <StatusBadge class="lg:hidden" data-reveal />
+      <h1 id="hero-title" class="text-display mt-8 lg:mt-0" data-reveal>
+        {SITE.name}
+      </h1>
+      <p class="mt-4 font-mono text-sm text-muted" data-reveal style="--reveal-delay: 60ms">
+        Backend Engineer · FinTech
+      </p>
+      <p class="text-lead mt-6 max-w-xl" data-reveal style="--reveal-delay: 120ms">
+        I build payment systems, ledgers and distributed backends in Java/Kotlin, Spring Boot, Rust
+        and Go.
+      </p>
+      <div class="mt-10 flex flex-wrap gap-3" data-reveal style="--reveal-delay: 180ms">
+        <Button href="#projects" iconEnd="arrow-right">
+          See my projects
+        </Button>
+        <Button href={`mailto:${SITE.email}`} variant="secondary" icon="mail">
+          Email me
+        </Button>
+      </div>
+    </Container>
+  </section>
+
+  {sections.map((s) => (
+    <section id={s.id} aria-labelledby={`${s.id}-title`} class="border-t border-line">
+      <Container class="py-20 md:py-28">
+        <div data-reveal>
+          <SectionHeading index={s.index} label={s.label} title={s.title} id={`${s.id}-title`} />
+          <p class="mt-6 text-sm text-muted">Content coming soon.</p>
+        </div>
+      </Container>
+    </section>
+  ))}
 </BaseLayout>

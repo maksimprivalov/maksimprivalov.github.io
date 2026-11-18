@@ -1,0 +1,230 @@
+---
+/**
+ * Living specimen of the design system (design-system/maksim-privalov/MASTER.md).
+ * noindex; all content here is SAMPLE content for layout review, not real facts.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Container from '../components/ui/Container.astro';
+import Button from '../components/ui/Button.astro';
+import Card from '../components/ui/Card.astro';
+import Tag from '../components/ui/Tag.astro';
+import StatusBadge from '../components/ui/StatusBadge.astro';
+import SectionHeading from '../components/ui/SectionHeading.astro';
+import Icon from '../components/ui/Icon.astro';
+
+const colors = [
+  { token: '--bg', hex: '#161616', use: 'Page background' },
+  { token: '--line', hex: '#262626', use: 'Borders, dividers' },
+  { token: '--muted', hex: '#8A8A8A', use: 'Secondary text · 5.24:1' },
+  { token: '--text', hex: '#EDEDED', use: 'Primary text · 15.46:1' },
+  { token: '--accent', hex: '#10B981', use: 'Accent · 7.13:1' },
+  { token: '--accent-hover', hex: '#34D399', use: 'Accent hover · 9.41:1' },
+  { token: '--danger', hex: '#F87171', use: 'Failure states · 6.54:1' },
+];
+const radii = [
+  ['--radius-sm', '6px'],
+  ['--radius-md', '10px'],
+  ['--radius-lg', '16px'],
+  ['--radius-xl', '24px'],
+];
+---
+
+<BaseLayout title="Styleguide | Maksim Privalov" description="Design system specimen." noindex>
+  <Container class="py-20 md:py-28">
+    <p class="eyebrow">
+      <span class="text-accent">00</span> / Styleguide
+    </p>
+    <h1 class="text-h1 mt-4">Design system</h1>
+    <p class="text-lead mt-4 max-w-2xl">
+      Live specimen of tokens and components. Rules:{' '}
+      <code class="font-mono text-sm">design-system/maksim-privalov/MASTER.md</code>. All text below
+      is sample content.
+    </p>
+
+    <!-- Colors -->
+    <section class="mt-20" aria-labelledby="sg-colors">
+      <h2 id="sg-colors" class="text-h2">
+        Color
+      </h2>
+      <ul class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        {colors.map((c) => (
+          <li class="overflow-hidden rounded-lg border border-line">
+            <div class="h-20 border-b border-line" style={`background:var(${c.token})`} />
+            <div class="p-4">
+              <p class="font-mono text-sm">{c.token}</p>
+              <p class="tabular mt-1 font-mono text-xs text-muted">{c.hex}</p>
+              <p class="mt-2 text-xs text-muted">{c.use}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- Typography -->
+    <section class="mt-20" aria-labelledby="sg-type">
+      <h2 id="sg-type" class="text-h2">
+        Typography
+      </h2>
+      <div class="mt-8 space-y-8 rounded-xl border border-line p-6 md:p-10">
+        <div>
+          <p class="eyebrow">text-display · Geist 600</p>
+          <p class="text-display mt-3">Maksim Privalov</p>
+        </div>
+        <div>
+          <p class="eyebrow">text-h1</p>
+          <p class="text-h1 mt-3">Idempotency keys in practice</p>
+        </div>
+        <div>
+          <p class="eyebrow">text-h2</p>
+          <p class="text-h2 mt-3">Selected work</p>
+        </div>
+        <div>
+          <p class="eyebrow">text-h3</p>
+          <p class="text-h3 mt-3">Payment Processing Service</p>
+        </div>
+        <div>
+          <p class="eyebrow">text-lead</p>
+          <p class="text-lead mt-3 max-w-2xl">
+            A lead paragraph introduces a section in one or two calm sentences.
+          </p>
+        </div>
+        <div>
+          <p class="eyebrow">body · 16px / 1.65</p>
+          <p class="mt-3 max-w-prose">
+            Body copy for long-form reading. A{' '}
+            <a href="#sg-type" class="link">
+              text link
+            </a>{' '}
+            uses an emerald underline that thickens on hover. Inline{' '}
+            <code class="rounded-sm bg-line px-1.5 py-0.5 font-mono text-[0.875em]">code</code> sits
+            on a line-colored fill with full-contrast text.
+          </p>
+        </div>
+        <div>
+          <p class="eyebrow">mono · tabular numbers</p>
+          <pre class="tabular mt-3 font-mono text-sm leading-7 text-muted">DEBIT   wallet_a   <span class="text-text">120.00</span>
+CREDIT  merchant   <span class="text-text">118.50</span>
+CREDIT  fees         <span class="text-text">1.50</span>
+<span class="text-accent">Σ debit − Σ credit = 0.00 ✓</span></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Buttons -->
+    <section class="mt-20" aria-labelledby="sg-buttons">
+      <h2 id="sg-buttons" class="text-h2">
+        Buttons
+      </h2>
+      <div class="mt-8 flex flex-wrap items-center gap-3">
+        <Button href="#sg-buttons" iconEnd="arrow-right">
+          Primary
+        </Button>
+        <Button href="#sg-buttons" variant="secondary" icon="mail">
+          Secondary
+        </Button>
+        <Button href="https://github.com/maksimprivalov" variant="secondary" icon="github">
+          External
+        </Button>
+        <Button variant="ghost">Ghost</Button>
+      </div>
+    </section>
+
+    <!-- Tags & status -->
+    <section class="mt-20" aria-labelledby="sg-tags">
+      <h2 id="sg-tags" class="text-h2">
+        Tags and status
+      </h2>
+      <div class="mt-8 flex flex-wrap items-center gap-2">
+        <Tag>Rust</Tag>
+        <Tag>PostgreSQL</Tag>
+        <Tag href="#sg-tags">linked tag</Tag>
+      </div>
+      <StatusBadge class="mt-6" />
+    </section>
+
+    <!-- Cards -->
+    <section class="mt-20" aria-labelledby="sg-cards">
+      <SectionHeading index="01" label="Section heading" title="Cards" id="sg-cards">
+        Linked cards highlight their border and title on hover and focus.
+      </SectionHeading>
+      <div class="mt-10 grid gap-4 md:grid-cols-2">
+        <Card
+          href="#sg-cards"
+          meta="Sample · Rust"
+          title="Linked card"
+          description="Sample description of a project in one or two lines, muted."
+          tags={['Rust', 'Axum', 'PostgreSQL']}
+        />
+        <Card
+          meta="Sample · Static"
+          title="Static card"
+          description="An article card without a link: no hover state, no arrow."
+          tags={['Go']}
+        />
+      </div>
+    </section>
+
+    <!-- Radii & icons -->
+    <section class="mt-20" aria-labelledby="sg-misc">
+      <h2 id="sg-misc" class="text-h2">
+        Radii and icons
+      </h2>
+      <ul class="mt-8 flex flex-wrap gap-4">
+        {radii.map(([token, value]) => (
+          <li
+            class="grid size-24 place-items-center border border-line text-center"
+            style={`border-radius:var(${token})`}
+          >
+            <span class="font-mono text-xs text-muted">
+              {token}
+              <br />
+              {value}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <ul class="mt-8 flex flex-wrap gap-5 text-muted">
+        {(
+          [
+            'arrow-right',
+            'arrow-up-right',
+            'mail',
+            'menu',
+            'x',
+            'file-text',
+            'download',
+            'github',
+            'linkedin',
+          ] as const
+        ).map((n) => (
+          <li class="flex flex-col items-center gap-2">
+            <Icon name={n} size={20} class="text-text" />
+            <span class="font-mono text-[11px]">{n}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- Reveal -->
+    <section class="mt-20" aria-labelledby="sg-motion">
+      <h2 id="sg-motion" class="text-h2">
+        Motion
+      </h2>
+      <p class="mt-4 max-w-prose text-muted">
+        Blocks with <code class="font-mono text-sm text-text">data-reveal</code> fade in with a 12px
+        rise (500ms, ease-out-quint). Visible without JS and under reduced motion.
+      </p>
+      <div class="mt-8 grid gap-4 sm:grid-cols-3">
+        {[0, 80, 160].map((d) => (
+          <div
+            class="rounded-lg border border-line p-6 font-mono text-xs text-muted"
+            data-reveal
+            style={`--reveal-delay:${d}ms`}
+          >
+            delay {d}ms
+          </div>
+        ))}
+      </div>
+    </section>
+  </Container>
+</BaseLayout>
