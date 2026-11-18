@@ -1,11 +1,12 @@
 /**
  * Single source of truth for where the site is deployed.
  *
- * GitHub Pages project site: site = 'https://maksimprivalov.github.io', base = '/site'.
- * After a custom domain is set: site = 'https://<domain>', base = '/' (and add public/CNAME).
+ * GitHub Pages user site (repo maksimprivalov.github.io), served from the root.
+ * For a custom domain: set SITE_URL = 'https://<domain>' and add public/CNAME.
+ * BASE_PATH stays configurable; all links go through url() so a sub-path still works.
  */
 export const SITE_URL = 'https://maksimprivalov.github.io';
-export const BASE_PATH = '/site';
+export const BASE_PATH = '/';
 
 export const SITE = {
   name: 'Maksim Privalov',

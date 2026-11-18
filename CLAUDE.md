@@ -47,7 +47,7 @@ Main items, for orientation only (verify them against the CV and repos):
 | Fonts | Self-hosted through Fontsource (no Google Fonts CDN). Sans: Geist or Inter. Mono: JetBrains Mono, with tabular numbers for amounts and code |
 | Animation | Hand-written **Canvas 2D + TypeScript**, no animation library unless clearly justified |
 | Demos | **WebAssembly** where possible (Go → WASM via TinyGo or standard Go; Rust → WASM via `wasm-pack`) |
-| Hosting | **GitHub Pages**, repo `maksimprivalov/site` (a project site, see "Domain and base path") |
+| Hosting | **GitHub Pages**, repo `maksimprivalov/maksimprivalov.github.io` (a user site, see "Domain and base path") |
 | CI/CD | GitHub Actions: build Astro and deploy to Pages on push to `main`; compile `cv/cv.tex` to PDF in the same pipeline |
 | Package manager | pnpm |
 
@@ -56,13 +56,13 @@ Keep dependencies minimal. Before adding any dependency, explain why it's needed
 ---
 
 ## Domain and base path
-The repo is `maksimprivalov/site`, so on GitHub Pages it's a **project site**:
-- **Until a custom domain is set**, the site lives at `https://maksimprivalov.github.io/site/`. Astro must use `site: 'https://maksimprivalov.github.io'` and `base: '/site'`.
-- **After a custom domain is set**, the site is served from the domain root, so `base` becomes `/` and `site` becomes the domain.
+The repo is `maksimprivalov/maksimprivalov.github.io`, so on GitHub Pages it's a **user site** served from the root:
+- **Until a custom domain is set**, the site lives at `https://maksimprivalov.github.io/`. Astro uses `site: 'https://maksimprivalov.github.io'` and `base: '/'`.
+- **After a custom domain is set**, only `site` changes to the domain (`base` stays `/`).
 
 The final domain is **not decided yet** (likely `maksimprivalov.dev` / `.com` / `.me`).
 - Keep `site` and `base` in **one place** (`src/config.ts`, read by `astro.config.mjs`), so the switch is a one-line change.
-- **Every internal link and asset path must respect the base path** (`import.meta.env.BASE_URL` or a small `url()` helper). This includes nav links, images, fonts, OG images, `/cv.pdf`, `.wasm` files, RSS, sitemap and canonical URLs. Never hard-code a leading `/`. Verify by building and previewing with `base: '/site'` and checking that nothing 404s.
+- **Every internal link and asset path must respect the base path** (`import.meta.env.BASE_URL` or a small `url()` helper). This includes nav links, images, fonts, OG images, `/cv.pdf`, `.wasm` files, RSS, sitemap and canonical URLs. Never hard-code a leading `/`, so the site keeps working if it's ever served from a sub-path. To verify, temporarily build with a non-root `base` (e.g. `/site`), preview, and check that nothing 404s.
 - When I give you the domain: switch the config, add `public/CNAME`, and tell me exactly which DNS records to set (GitHub Pages A/AAAA records for the apex domain, CNAME for `www` → `maksimprivalov.github.io`), and remind me to set the custom domain in repo Settings → Pages and enable "Enforce HTTPS".
 
 ---
@@ -178,7 +178,7 @@ Each demo is lazy-loaded (`client:visible`), and its project page must still be 
 ---
 
 ## Repository and quality
-- Repo: `maksimprivalov/site`. Pages source: **GitHub Actions** (official `withastro/action` + `actions/deploy-pages`).
+- Repo: `maksimprivalov/maksimprivalov.github.io`. Pages source: **GitHub Actions** (official `withastro/action` + `actions/deploy-pages`).
 - Demo sources (Go/Rust → WASM) live in `demos/<name>/`. Built `.wasm` files go to `public/demos/`, built either in CI or by a documented script.
 - Scripts: `dev`, `build`, `preview`, `check` (astro check + type check), `lint`, `format` (Prettier).
 - `README.md` covering how to run it locally, how to add a blog post, how to update the CV, how to rebuild the demos and how to set the custom domain.
@@ -188,7 +188,7 @@ Each demo is lazy-loaded (`client:visible`), and its project page must still be 
 ---
 
 ## Phases (work in this order; stop after each phase for my review)
-1. **Skeleton and deploy.** Astro + TS + Tailwind + MDX scaffold, the deploy workflow, a minimal home page live on `https://maksimprivalov.github.io/site/`, with base-path handling working from day one.
+1. **Skeleton and deploy.** Astro + TS + Tailwind + MDX scaffold, the deploy workflow, a minimal home page live on `https://maksimprivalov.github.io/`, with base-path handling working from day one.
 2. **Design system.** ui-ux-pro-max design system with my palette, persisted to files; base layout, header/footer, typography, buttons, cards, tags.
 3. **Content.** Home sections, project pages (without demos yet), experience timeline, `/cv` + PDF pipeline, contact, 404.
 4. **Hero "Live Ledger" animation.**

@@ -1,8 +1,8 @@
-# maksimprivalov/site
+# maksimprivalov.github.io
 
 Personal website of Maksim Privalov (portfolio, blog, CV). Built with Astro, deployed to GitHub Pages.
 
-Live: https://maksimprivalov.github.io/site/
+Live: https://maksimprivalov.github.io/
 
 ## Run locally
 
@@ -10,7 +10,7 @@ Requires Node ≥ 22.12 and pnpm 10.
 
 ```sh
 pnpm install
-pnpm dev        # http://localhost:4321/site/
+pnpm dev        # http://localhost:4321/
 pnpm build      # static output in dist/
 pnpm preview    # serve dist/ with the base path
 pnpm check      # astro check + tsc

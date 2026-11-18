@@ -2,6 +2,7 @@
  * Build an internal URL that respects the configured base path.
  * Always use this (never a hard-coded leading '/') for links and assets.
  *
+ * Examples with base '/site' (with base '/', the '/site' prefix is simply absent):
  *   url()            -> '/site/'
  *   url('cv')        -> '/site/cv'
  *   url('/cv.pdf')   -> '/site/cv.pdf'
