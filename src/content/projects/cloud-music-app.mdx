@@ -1,0 +1,80 @@
+---
+title: Cloud Music App
+summary: A serverless music streaming app on AWS with a single-table DynamoDB design and stream-driven subscriber notifications. Team project.
+kind: AWS · Serverless
+tech: [AWS Lambda, DynamoDB, S3, Cognito, API Gateway, Python, Angular]
+repo: https://github.com/maksimprivalov/awscloudmusicapp
+demo: 'Architecture walkthrough with screenshots (no live AWS backend).'
+featured: true
+order: 4
+team: true
+---
+
+import Figure from '../../components/diagram/Figure.astro';
+import Flow from '../../components/diagram/Flow.astro';
+
+## Problem
+
+A university project built by a team of three. Users browse albums and artists by genre, subscribe
+to them, and get notified when a new track is added. Admins manage artists, albums and tracks and
+upload audio files.
+
+{/* TODO(Maksim): describe your own part in the team project. */}
+
+## Architecture
+
+<Figure
+  label="Request path and notifications"
+  caption="Audio never passes through Lambda: uploads and playback use presigned S3 URLs."
+>
+  <Flow
+    steps={[
+      {
+        label: 'Angular → API Gateway → Lambda',
+        detail:
+          'Python 3.9 functions, deployed with the Serverless Framework. Auth via Amazon Cognito; admins are members of the Admin group.',
+      },
+      {
+        label: 'Lambda → DynamoDB',
+        detail: 'Tables: Music, Artists, Subscriptions, Notifications.',
+      },
+      { label: 'Lambda → S3', detail: 'Presigned upload and play URLs.' },
+      {
+        label: 'Music table stream → notify_dispatcher',
+        detail:
+          'On every track write, look up subscribers of its album and artists and create notifications.',
+      },
+    ]}
+  />
+</Figure>
+
+### Single-table design
+
+Tracks, albums and artists share one `Music` table.
+
+| Entity | PK             | SK         |
+| ------ | -------------- | ---------- |
+| Track  | `CONTENT#<id>` | `METADATA` |
+| Album  | `ALBUM#<id>`   | `ALBUM`    |
+| Artist | `ARTIST#<id>`  | `ARTIST`   |
+
+- `GSI1` (`GENRE#<genre>` / `TYPE#<type>#NAME#<name>`) powers the discover page.
+- `GSI2` (`ALBUM#<id>` / `TRACK#<nnn>`) lists an album's tracks in order.
+
+## Key decisions
+
+- **One table, access-pattern-driven keys.** The two GSIs answer the two main read paths (discover by
+  genre, album track list) without scans.
+- **Notifications from the DynamoDB stream**, not from the write path: adding a track doesn't wait for
+  subscriber fan-out.
+- **Presigned S3 URLs** keep audio traffic off Lambda and API Gateway.
+
+### Known gaps
+
+Documented honestly in the repo: every Lambda shares one broad IAM role, there are no real tests, and
+`GET /content` scans the whole table.
+
+## Tech
+
+Angular 20, Python 3.9 on AWS Lambda behind API Gateway, the Serverless Framework, Amazon Cognito,
+DynamoDB and S3.

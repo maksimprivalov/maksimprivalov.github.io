@@ -1,0 +1,30 @@
+---
+/** Grid of system components (services, modules) with their responsibility. */
+interface Module {
+  name: string;
+  role: string;
+  /** Highlight the coordinating component. */
+  primary?: boolean;
+}
+
+interface Props {
+  modules: Module[];
+  columns?: 2 | 3;
+}
+
+const { modules, columns = 3 } = Astro.props;
+---
+
+<ul class:list={['grid gap-3 sm:grid-cols-2', columns === 3 && 'lg:grid-cols-3']}>
+  {modules.map((m) => (
+    <li
+      class:list={[
+        'rounded-md border p-4',
+        m.primary ? 'border-accent/50 bg-accent/[0.04]' : 'border-line',
+      ]}
+    >
+      <p class:list={['font-mono text-sm', m.primary ? 'text-accent' : 'text-text']}>{m.name}</p>
+      <p class="mt-1.5 text-sm leading-relaxed text-muted">{m.role}</p>
+    </li>
+  ))}
+</ul>

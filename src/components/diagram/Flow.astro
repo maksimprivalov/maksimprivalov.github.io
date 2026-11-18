@@ -1,0 +1,48 @@
+---
+/**
+ * A sequence of steps drawn as a vertical rail: step marker, mono label, optional detail.
+ * Plain ordered list underneath, so it reads correctly without CSS or JS.
+ */
+interface Step {
+  label: string;
+  detail?: string;
+  /** Visual tone of the marker: accent (default), muted, danger. */
+  tone?: 'accent' | 'muted' | 'danger';
+}
+
+interface Props {
+  steps: Step[];
+  /** Show step numbers instead of dots. */
+  numbered?: boolean;
+}
+
+const { steps, numbered = false } = Astro.props;
+const tone = {
+  accent: 'border-accent text-accent',
+  muted: 'border-line text-muted',
+  danger: 'border-danger text-danger',
+};
+---
+
+<ol class="relative">
+  {steps.map((step, i) => (
+    <li class="relative flex gap-4 pb-5 last:pb-0">
+      {i < steps.length - 1 && (
+        <span class="absolute top-7 bottom-0 left-[13px] w-px bg-line" aria-hidden="true" />
+      )}
+      <span
+        class:list={[
+          'relative grid size-[27px] shrink-0 place-items-center rounded-full border bg-bg font-mono text-[11px]',
+          tone[step.tone ?? 'accent'],
+        ]}
+        aria-hidden="true"
+      >
+        {numbered ? i + 1 : <span class="size-1.5 rounded-full bg-current" />}
+      </span>
+      <div class="min-w-0 pt-0.5">
+        <p class="font-mono text-sm text-text">{step.label}</p>
+        {step.detail && <p class="mt-1 text-sm text-muted">{step.detail}</p>}
+      </div>
+    </li>
+  ))}
+</ol>

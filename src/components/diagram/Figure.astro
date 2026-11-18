@@ -1,0 +1,15 @@
+---
+/** Framed figure for diagrams and (later) demos. */
+interface Props {
+  caption: string;
+  label?: string;
+}
+
+const { caption, label } = Astro.props;
+---
+
+<figure class="not-prose my-10 rounded-xl border border-line p-5 sm:p-7">
+  {label && <p class="eyebrow mb-5">{label}</p>}
+  <slot />
+  <figcaption class="mt-5 text-sm text-muted">{caption}</figcaption>
+</figure>

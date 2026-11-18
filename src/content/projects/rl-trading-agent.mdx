@@ -1,0 +1,85 @@
+---
+title: RL Trading Agent
+summary: A PPO agent that learns to trade a single stock on a custom Gymnasium environment, benchmarked honestly against Buy & Hold.
+kind: Python · Reinforcement learning
+tech: [Python, stable-baselines3, Gymnasium, pandas, yfinance, TensorBoard]
+repo: https://github.com/maksimprivalov/RLTradingAgent
+demo: 'Interactive equity curve: PPO vs Buy & Hold on the test period, from results precomputed at build time.'
+featured: true
+order: 3
+---
+
+import Figure from '../../components/diagram/Figure.astro';
+import Flow from '../../components/diagram/Flow.astro';
+
+## Problem
+
+A research project, not a production trading system. I wanted to understand three things hands-on:
+how to frame a financial problem as a Markov decision process, why reinforcement learning for trading
+is hard (sparse signal, non-stationary markets, easy-to-miss data leakage), and how to build an ML
+pipeline end to end with honest benchmarking.
+
+The agent observes a rolling window of market features and decides each day whether to **BUY**,
+**HOLD** or **SELL**. Default asset: MSFT, daily data from 2015 to 2025.
+
+## Architecture
+
+<Figure
+  label="Pipeline"
+  caption="Indicators are computed on the full series first, then split chronologically."
+>
+  <Flow
+    numbered
+    steps={[
+      {
+        label: 'features.py',
+        detail: 'Download daily OHLCV with yfinance, compute technical indicators.',
+      },
+      {
+        label: 'prepare_data.py',
+        detail: 'Time-based train / test / validation split, saved as CSVs.',
+      },
+      { label: 'env.py', detail: 'Custom Gymnasium TradingEnv.' },
+      { label: 'train.py', detail: 'PPO training loop with TensorBoard logging.' },
+      { label: 'eval.py', detail: 'Out-of-sample evaluation against Buy & Hold.' },
+    ]}
+  />
+</Figure>
+
+### Environment
+
+- **Observation:** a `window_size × 6` vector of the last N days of `log_return`, `sma20`, `sma50`,
+  `rsi14`, `macd` and `volume_change`.
+- **Actions:** discrete: `SELL`, `HOLD`, `BUY`.
+- **Position sizing:** all-in / all-out, on purpose, to keep the action space small enough to learn.
+- **Costs:** a fixed 0.1% fee on buys and sells. Slippage and market impact are not modeled.
+
+| Split      | Period            | Purpose                      |
+| ---------- | ----------------- | ---------------------------- |
+| Train      | 2015-01 → 2020-12 | Policy learning              |
+| Test       | 2021-01 → 2023-12 | Out-of-sample evaluation     |
+| Validation | 2024-01 → 2024-12 | Reward tuning, sanity checks |
+
+## Key decisions
+
+- **Shaped reward instead of raw PnL.** Pure PnL produced an agent that learned to do nothing, because
+  doing nothing never pays a fee. The reward combines equity change, a bonus for closing a winning
+  trade, a reward for holding during upward moves, penalties for invalid actions and for sitting flat,
+  and a small volatility penalty. It's pragmatic, not principled.
+- **Strictly chronological splits.** No shuffling. A first version computed indicators per split,
+  which made the 20-day SMA at the start of the test set wrong; computing indicators on the full
+  series before splitting fixed that leak.
+- **Buy & Hold as the benchmark.** Beating a strongly trending stock with a long-only discrete policy
+  is hard by design. The agent is competitive with Buy & Hold in some training runs and underperforms
+  in others; results are sensitive to reward coefficients and the random seed.
+
+## What I learned
+
+Reward design dominated everything else: more time went into reward coefficients than PPO
+hyperparameters. 100k timesteps was too few for stable policies. The honest next steps are
+continuous actions for position sizing, walk-forward evaluation across market regimes, multi-seed
+runs, and Sharpe ratio and max drawdown as metrics instead of raw equity.
+
+## Tech
+
+Python 3.13, stable-baselines3 (PPO), Gymnasium, yfinance, pandas and numpy, matplotlib and TensorBoard.

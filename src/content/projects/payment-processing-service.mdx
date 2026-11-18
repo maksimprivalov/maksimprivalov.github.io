@@ -1,0 +1,121 @@
+---
+title: Payment Processing Service
+summary: Six Rust microservices that move money with an orchestrated saga, a double-entry ledger, idempotent payments and an append-only audit log.
+kind: Rust · Distributed transactions
+tech: [Rust, Axum, PostgreSQL, SQLx, Docker, nginx, Angular, JWT]
+repo: https://github.com/maksimprivalov/payment-processing-service
+demo: 'Transfer simulator: step through the saga, inject a failure, resend the same idempotency key. Runs in your browser.'
+featured: true
+order: 1
+---
+
+import Figure from '../../components/diagram/Figure.astro';
+import Flow from '../../components/diagram/Flow.astro';
+import Modules from '../../components/diagram/Modules.astro';
+
+## Problem
+
+Financial systems have unusually strict correctness requirements. Money must never be created or
+destroyed by a software failure, every operation must be traceable, and executing the same payment
+twice must be safely rejected.
+
+I built this project to implement those constraints from first principles, without relying on
+managed payment infrastructure.
+
+## Architecture
+
+The system is split into six independently deployable services. Each service owns its own
+PostgreSQL database: no shared state and no cross-service database access. An Angular frontend talks
+to the orchestrator and the auth service through an nginx reverse proxy.
+
+<Figure
+  label="Services"
+  caption="Six services, one database each. The saga orchestrator coordinates every transfer."
+>
+  <Modules
+    modules={[
+      {
+        name: 'saga-orchestrator',
+        role: 'Coordinates the distributed payment workflow across all services.',
+        primary: true,
+      },
+      {
+        name: 'payment-service',
+        role: 'Payment records, idempotency enforcement, status tracking.',
+      },
+      {
+        name: 'account-service',
+        role: 'Account lifecycle, balance storage, debit and credit operations.',
+      },
+      {
+        name: 'ledger-service',
+        role: 'Double-entry bookkeeping: every transfer produces a paired DEBIT and CREDIT entry.',
+      },
+      { name: 'audit-service', role: 'Append-only event log of all system actions and outcomes.' },
+      { name: 'auth-service', role: 'Registration, login, JWT issuance and validation.' },
+    ]}
+  />
+</Figure>
+
+### The transfer saga
+
+Distributed ACID transactions don't exist across independent databases, so a transfer is a sequence
+of local transactions, each with an explicit compensating action.
+
+<Figure
+  label="Saga: happy path and compensation"
+  caption="If any step fails, the orchestrator runs the compensating actions in reverse, so money is never debited without appearing in the ledger."
+>
+  <Flow
+    numbered
+    steps={[
+      { label: 'payment.create', detail: 'Payment record created with status PENDING.' },
+      { label: 'account.debit(source)' },
+      { label: 'ledger.record(DEBIT)' },
+      { label: 'account.credit(destination)' },
+      { label: 'ledger.record(CREDIT)' },
+      { label: 'payment.complete', detail: 'Status COMPLETED.' },
+      { label: 'audit.append(SUCCESS)' },
+    ]}
+  />
+  <div class="mt-6 border-t border-line pt-6">
+    <Flow
+      steps={[
+        {
+          label: 'on failure → COMPENSATE',
+          detail: 'Reverse debits and credits, write offsetting ledger entries.',
+          tone: 'danger',
+        },
+        {
+          label: 'payment.fail',
+          detail: 'Status FAILED, failure reason recorded in the audit log.',
+          tone: 'muted',
+        },
+      ]}
+    />
+  </div>
+</Figure>
+
+## Key decisions
+
+- **Orchestrated saga over distributed transactions.** One coordinator owns the workflow and its
+  compensations, which keeps the failure handling explicit and in one place.
+- **Double-entry ledger as a correctness mechanism.** Every transfer produces exactly one debit and
+  one credit, so the sum of all debits always equals the sum of all credits, and the ledger can be
+  checked for consistency at any time.
+- **Idempotency at the payment service.** The payment service tracks payment state and rejects
+  duplicate execution of the same payment. Semantically invalid requests (same-account transfers,
+  non-positive amounts) are rejected at the boundary, before any state changes.
+- **Append-only audit trail.** Every action, successful or failed, is recorded, and no entry is ever
+  modified or deleted, so the full history of any payment is traceable.
+- **Database per service.** Strong isolation between services, at the cost of giving up
+  cross-service transactions. That trade-off is what the saga exists to handle.
+- **JWT propagated through the call chain.** The token travels from the frontend through the
+  orchestrator to downstream services, and each service validates it independently. There's no
+  single auth bottleneck.
+
+## Tech
+
+Rust for every backend service, Axum (Tower ecosystem) for HTTP, SQLx for compile-time verified async
+SQL, PostgreSQL with one isolated database per service, Docker Compose for deployment, nginx as
+reverse proxy and static file server, and an Angular SPA as the client.

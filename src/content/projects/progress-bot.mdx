@@ -1,0 +1,47 @@
+---
+title: progress-bot
+summary: A deployed Telegram bot for tracking habits and measurements, driven entirely by inline buttons in one self-updating message.
+kind: Go · Telegram bot
+tech: [Go, SQLite, Telegram Bot API, gonum/plot]
+repo: https://github.com/maksimprivalov/progress-bot
+live: { label: 'Try it on Telegram', href: 'https://t.me/mojprogress_bot' }
+order: 5
+---
+
+import Figure from '../../components/diagram/Figure.astro';
+import Modules from '../../components/diagram/Modules.astro';
+
+## Problem
+
+Tracking gym progress, habits and measurements in a chat usually floods the chat with messages. This
+bot does everything through inline buttons in a **single message that keeps updating**, so the chat
+never gets cluttered.
+
+- **Folders** group things and can be nested to any depth.
+- **Boxes** store entries, in two types:
+  - **Check**: a habit, done or not done per day, with a streak and a grid of the last 30 days.
+  - **Measure**: a number per day (weight, seconds, reps), with a PNG chart on demand.
+
+## Architecture
+
+<Figure label="Packages" caption="Pure Go, no CGO: the SQLite driver is a pure-Go implementation.">
+  <Modules
+    columns={2}
+    modules={[
+      { name: 'main.go', role: 'Entry point, wires up dependencies.', primary: true },
+      { name: 'internal/bot', role: 'Telegram logic: menu, buttons, text input.' },
+      { name: 'internal/storage', role: 'SQLite: folders, boxes, entries.' },
+      { name: 'internal/chart', role: 'PNG chart generation.' },
+    ]}
+  />
+</Figure>
+
+## Key decisions
+
+- **One message as the whole UI.** Navigation edits the same message instead of sending new ones.
+- **No CGO.** `modernc.org/sqlite` keeps the build a single static Go binary.
+- **Long polling** via `go-telegram-bot-api`, so it doesn't need a public webhook endpoint.
+
+## Tech
+
+Go 1.25, go-telegram-bot-api (long polling), modernc.org/sqlite, gonum/plot for charts, and godotenv.

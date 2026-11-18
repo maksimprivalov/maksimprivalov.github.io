@@ -1,0 +1,123 @@
+---
+title: Fraud Detection System
+summary: A rule-based credit card fraud engine in Java and Drools that scores transactions in real time and explains every decision.
+kind: Java · Drools · Risk
+tech: [Java, Spring Boot, Drools, Maven, Angular]
+repo: https://github.com/maksimprivalov/credit-card-fraud-detection
+demo: 'Playground: pick a preset transaction and see which rules fired, the risk score and the explanation. Replay of real outputs recorded from the system.'
+featured: true
+order: 2
+---
+
+import Figure from '../../components/diagram/Figure.astro';
+import Flow from '../../components/diagram/Flow.astro';
+import Modules from '../../components/diagram/Modules.astro';
+
+## Problem
+
+Fraud detection sits where real-time event processing, encoded domain expertise and explainability
+meet. Production fraud systems often need auditable decisions: a declined transaction has to be
+justified.
+
+I built this project to explore expert-system design: encoding real fraud patterns as verifiable,
+traceable rules rather than opaque model weights.
+
+## Architecture
+
+Four independently buildable Maven modules. For each request, the Spring Boot service creates a
+stateful Drools session, inserts the transaction, the customer profile and the transaction history,
+fires all rules, and returns a structured decision with the full rule trace.
+
+<Figure
+  label="Modules"
+  caption="The compiled rule artifact (KJAR) is a separate module from the service that runs it."
+>
+  <Modules
+    columns={2}
+    modules={[
+      {
+        name: 'fraud-detection-model',
+        role: 'Shared domain model: transactions, customer profiles, fact classes, risk scoring.',
+      },
+      {
+        name: 'fraud-detection-kjar',
+        role: 'Drools KJAR: the compiled rule artifact containing all fraud detection logic.',
+        primary: true,
+      },
+      {
+        name: 'fraud-detection-service',
+        role: 'Spring Boot REST API: manages the KIE session lifecycle and exposes the analysis endpoints.',
+      },
+      { name: 'fraud-detection-ui', role: 'Angular SPA for interactive transaction analysis.' },
+    ]}
+  />
+</Figure>
+
+### Rule levels
+
+Rules run in four salience-ordered levels, so derived facts exist before the higher-level pattern
+rules that depend on them.
+
+<Figure
+  label="Hierarchical rule execution"
+  caption="A compromised card short-circuits everything with an immediate BLOCK at salience 200."
+>
+  <Flow
+    numbered
+    steps={[
+      {
+        label: 'Level 1 · classification (salience 100)',
+        detail:
+          'Raw attributes become typed facts: Small/Medium/LargeTransaction, ForeignTransaction, RiskyMerchantCategory, NightTransaction, SuspiciousIP.',
+      },
+      {
+        label: 'Level 2 · profile deviation (salience 80)',
+        detail:
+          'Facts compared with the customer profile: SpendingAnomaly (>3× daily average), UnknownLocation, UnusualMerchant, CompromisedCard.',
+      },
+      {
+        label: 'Level 3 · temporal patterns (salience 60)',
+        detail:
+          'CEP time windows over the history: card testing, impossible travel, velocity attack, dormant awakening, high frequency, multi-country.',
+      },
+      {
+        label: 'Level 4 · bonuses and decision (salience 10–200)',
+        detail:
+          'Extra weight for dangerous combinations, then APPROVE (<30), REVIEW (30–79) or BLOCK (≥80).',
+      },
+    ]}
+  />
+</Figure>
+
+## Key decisions
+
+- **Salience levels instead of one flat rule set.** Lower-level classification always completes
+  before composite pattern detection begins.
+- **Complex event processing in STREAM mode.** Time-windowed `accumulate` patterns count, average and
+  group transactions over intervals. Examples: 3+ micro-transactions (under 5 EUR) within 10 minutes
+  is card testing; transactions from different countries within 120 minutes is impossible travel;
+  5+ transactions within 5 minutes is a velocity attack.
+- **Backward chaining for composite risk.** An `isRiskSatisfied` query lets rules ask whether a
+  composite condition holds, and Drools resolves the dependency graph on demand instead of
+  materializing every intermediate fact.
+- **Explainability as a first-class requirement.** The `RiskScore` fact accumulates both the score
+  and the ordered list of rules that produced it, and every decision ships with that trace:
+
+```text
+FraudDecision {
+  transactionId: "TXN-001",
+  customerId:    "CUST-42",
+  decision:      BLOCK,
+  riskScore:     85,
+  reasons:       ["R2.3_SpendingAnomaly", "R3.2_ImpossibleTravel", "R4.8_Bonus_ImpossibleTravel_Foreign"]
+}
+```
+
+- **Additive scoring with a cap.** Each fired rule adds a fixed 5–40 points, capped at 100. A single
+  low-severity signal produces REVIEW, while correlated signals escalate to BLOCK without per-combination
+  thresholds.
+
+## Tech
+
+Java 11, Drools / KIE 7.73.0 (STREAM mode, backward chaining), Spring Boot 2.7.9, multi-module Maven,
+Angular 20 with Angular Material, and a Postman collection for the API.
