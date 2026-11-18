@@ -1,0 +1,16 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import { SITE } from '../../config';
+
+type Props = HTMLAttributes<'p'>;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<p class:list={['inline-flex items-center gap-2.5 text-sm text-muted', className]} {...rest}>
+  <span class="relative flex size-2" aria-hidden="true">
+    <span class="absolute inline-flex size-full rounded-full bg-accent motion-safe:animate-[status-ping_2.4s_var(--ease-out)_infinite]"></span>
+    <span class="relative inline-flex size-2 rounded-full bg-accent"></span>
+  </span>
+  {SITE.status}
+</p>

@@ -1,0 +1,28 @@
+---
+interface Props {
+  /** Section number shown in the eyebrow, e.g. "01". */
+  index?: string;
+  label: string;
+  title: string;
+  id?: string;
+  class?: string;
+}
+
+const { index, label, title, id, class: className } = Astro.props;
+---
+
+<header class:list={['max-w-2xl', className]}>
+  <p class="eyebrow">
+    {index && <span class="text-accent">{index}</span>}
+    {index && <span aria-hidden="true"> / </span>}
+    {label}
+  </p>
+  <h2 id={id} class="text-h2 mt-4">
+    {title}
+  </h2>
+  {Astro.slots.has('default') && (
+    <div class="text-lead mt-4">
+      <slot />
+    </div>
+  )}
+</header>

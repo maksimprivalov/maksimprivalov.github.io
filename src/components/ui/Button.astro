@@ -1,0 +1,40 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import Icon, { type IconName } from './Icon.astro';
+
+type Props = {
+  variant?: 'primary' | 'secondary' | 'ghost';
+  href?: string;
+  /** Leading icon. */
+  icon?: IconName;
+  /** Trailing icon; defaults to arrow-up-right for external links. */
+  iconEnd?: IconName;
+  class?: string;
+} & Omit<HTMLAttributes<'a'>, 'href' | 'class'> &
+  Omit<HTMLAttributes<'button'>, 'class'>;
+
+const { variant = 'primary', href, icon, iconEnd, class: className, ...rest } = Astro.props;
+const external = href !== undefined && /^https?:\/\//.test(href);
+const end = iconEnd ?? (external ? 'arrow-up-right' : undefined);
+const classes = ['btn', `btn-${variant}`, className];
+---
+
+{href !== undefined ? (
+  <a
+    href={href}
+    class:list={classes}
+    {...(external && { target: '_blank', rel: 'noopener noreferrer' })}
+    {...rest}
+  >
+    {icon && <Icon name={icon} />}
+    <slot />
+    {end && <Icon name={end} />}
+    {external && <span class="sr-only">(opens in a new tab)</span>}
+  </a>
+) : (
+  <button type="button" class:list={classes} {...rest}>
+    {icon && <Icon name={icon} />}
+    <slot />
+    {end && <Icon name={end} />}
+  </button>
+)}
