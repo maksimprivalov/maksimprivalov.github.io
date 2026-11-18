@@ -21,7 +21,7 @@ Visual reference (look and feel, motion, cards, typography): https://coffer.so/.
 - **GitHub:** https://github.com/maksimprivalov
 - **LinkedIn:** https://www.linkedin.com/in/maksim-privalov-1479a1263
 
-Take all experience, project and skills content from my CV (`cv/cv.tex`, which I will add to the repo) and from my GitHub repos and READMEs. **Do not invent facts, numbers, technologies or dates.** If something is missing, leave a clearly marked `TODO` and ask me.
+Take all experience, project and skills content from my CV (`cv/main.tex`) and from my GitHub repos and READMEs. **Do not invent facts, numbers, technologies or dates.** If something is missing, leave a clearly marked `TODO` and ask me.
 
 Main items, for orientation only (verify them against the CV and repos):
 - **Faculty of Technical Sciences, Novi Sad, Software Engineer (Feb 2026 – present):** took a Windows-only document-signing system cross-platform with Java PKCS#11; built a multi-tenant architecture that cut server RAM by ~86%.
@@ -48,7 +48,7 @@ Main items, for orientation only (verify them against the CV and repos):
 | Animation | Hand-written **Canvas 2D + TypeScript**, no animation library unless clearly justified |
 | Demos | **WebAssembly** where possible (Go → WASM via TinyGo or standard Go; Rust → WASM via `wasm-pack`) |
 | Hosting | **GitHub Pages**, repo `maksimprivalov/maksimprivalov.github.io` (a user site, see "Domain and base path") |
-| CI/CD | GitHub Actions: build Astro and deploy to Pages on push to `main`; compile `cv/cv.tex` to PDF in the same pipeline |
+| CI/CD | GitHub Actions: build Astro and deploy to Pages on push to `main`; compile `cv/main.tex` to PDF in the same pipeline |
 | Package manager | pnpm |
 
 Keep dependencies minimal. Before adding any dependency, explain why it's needed.
@@ -116,7 +116,7 @@ The skill is installed as a Claude Code plugin (`ui-ux-pro-max@ui-ux-pro-max-ski
 /blog                 Post list (tags, dates, reading time)
 /blog/[slug]          Post (MDX)
 /blog/tags/[tag]      Tag pages
-/cv                   HTML version of the CV + "Download PDF" (/cv.pdf, built from cv/cv.tex)
+/cv                   HTML version of the CV + "Download PDF" (/cv.pdf, built from cv/main.tex)
 /404                  Custom 404 in the same style
 /rss.xml              RSS feed
 ```
@@ -177,8 +177,9 @@ Each demo is lazy-loaded (`client:visible`), and its project page must still be 
 ---
 
 ## CV
-- `cv/cv.tex` (LaTeX, pdfLaTeX, needs `photo.jpg` in the same folder) is compiled in GitHub Actions and published as `/cv.pdf`.
+- `cv/main.tex` (LaTeX, pdfLaTeX, needs `cv/photo.jpg`) is compiled in GitHub Actions and published as `/cv.pdf`. It is the source of truth for CV content.
 - The `/cv` page is an HTML version of the same content, styled with the site's design system. Keep its content in a data file (`src/data/cv.ts` or YAML) so it's easy to update. Tell me whenever the HTML and LaTeX versions drift apart.
+- Implemented: `src/data/cv.ts` mirrors `cv/main.tex`; `pnpm cv:check` (part of `pnpm check` and the CI build) fails on any drift. The phone number and photo are intentionally left out of the HTML version.
 
 ---
 
