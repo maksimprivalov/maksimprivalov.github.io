@@ -1,0 +1,102 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Container from '../../components/ui/Container.astro';
+import Button from '../../components/ui/Button.astro';
+import Tag from '../../components/ui/Tag.astro';
+import Card from '../../components/ui/Card.astro';
+import { SITE } from '../../config';
+import { url } from '../../lib/url';
+
+export async function getStaticPaths() {
+  const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+  return projects.map((project, i) => ({
+    params: { slug: project.id },
+    props: { project, next: projects[(i + 1) % projects.length]! },
+  }));
+}
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+  next: CollectionEntry<'projects'>;
+}
+
+const { project, next } = Astro.props;
+const { Content } = await render(project);
+const { title, summary, tech, repo, live, demo, team } = project.data;
+---
+
+<BaseLayout title={`${title} | ${SITE.name}`} description={summary}>
+  <Container size="prose" class="pt-16 md:pt-24">
+    <nav aria-label="Breadcrumb">
+      <ol class="flex flex-wrap items-center gap-2 font-mono text-xs text-muted">
+        <li>
+          <a href={url()} class="transition-colors duration-150 hover:text-text">
+            Home
+          </a>
+        </li>
+        <li aria-hidden="true">/</li>
+        <li>
+          <a href={url('#projects')} class="transition-colors duration-150 hover:text-text">
+            Projects
+          </a>
+        </li>
+        <li aria-hidden="true">/</li>
+        <li aria-current="page" class="text-text">
+          {title}
+        </li>
+      </ol>
+    </nav>
+
+    <header class="mt-8">
+      <h1 class="text-h1">{title}</h1>
+      <p class="text-lead mt-5">{summary}</p>
+      <ul class="mt-6 flex flex-wrap gap-2" aria-label="Technologies">
+        {tech.map((t) => (
+          <li>
+            <Tag>{t}</Tag>
+          </li>
+        ))}
+      </ul>
+      <div class="mt-8 flex flex-wrap gap-3">
+        {repo && (
+          <Button href={repo} variant="secondary" icon="github">
+            Source on GitHub
+          </Button>
+        )}
+        {live && <Button href={live.href}>{live.label}</Button>}
+      </div>
+      {team && <p class="mt-6 text-sm text-muted">Team project.</p>}
+    </header>
+
+    <article class="prose mt-4">
+      <Content />
+    </article>
+
+    {demo && (
+      <section aria-labelledby="demo" class="mt-14">
+        <h2 id="demo" class="text-[1.5rem] font-semibold tracking-[-0.02em]">
+          Demo
+        </h2>
+        <div class="mt-5 rounded-xl border border-dashed border-line p-6 sm:p-7">
+          <p class="eyebrow">
+            <span class="text-accent">Planned</span> / Interactive demo
+          </p>
+          <p class="mt-3 text-muted">{demo}</p>
+        </div>
+      </section>
+    )}
+  </Container>
+
+  <Container size="prose" class="mt-20">
+    <p class="eyebrow">Next project</p>
+    <Card
+      class="mt-4"
+      href={url(`projects/${next.id}`)}
+      meta={next.data.kind}
+      title={next.data.title}
+      description={next.data.summary}
+      as="h2"
+    />
+  </Container>
+</BaseLayout>
