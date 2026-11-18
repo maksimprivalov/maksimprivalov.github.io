@@ -18,6 +18,14 @@ export const SITE = {
   email: 'mprivalovs@gmail.com',
   github: 'https://github.com/maksimprivalov',
   linkedin: 'https://www.linkedin.com/in/maksim-privalov-1479a1263',
+  /** Header navigation; paths are passed through url(). */
+  nav: [
+    { label: 'Projects', path: '#projects' },
+    { label: 'Experience', path: '#experience' },
+    { label: 'Writing', path: '#writing' },
+    { label: 'CV', path: 'cv' },
+    { label: 'Contact', path: '#contact' },
+  ],
   /** Search console verification tokens; leave empty until available. */
   verification: {
     google: '',

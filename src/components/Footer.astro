@@ -1,0 +1,42 @@
+---
+import { SITE } from '../config';
+import { url } from '../lib/url';
+import Icon from './ui/Icon.astro';
+
+const year = new Date().getFullYear();
+const social = [
+  { label: 'GitHub', href: SITE.github, icon: 'github' },
+  { label: 'LinkedIn', href: SITE.linkedin, icon: 'linkedin' },
+  { label: 'Email', href: `mailto:${SITE.email}`, icon: 'mail' },
+] as const;
+---
+
+<footer class="mt-24 border-t border-line">
+  <div class="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+    <div>
+      <a href={url()} class="text-sm font-medium transition-colors duration-150 hover:text-accent">
+        {SITE.name}
+      </a>
+      <p class="mt-1 text-sm text-muted">Backend engineer, FinTech · Novi Sad, Serbia</p>
+    </div>
+    <ul class="-ml-3 flex items-center gap-1 sm:ml-0">
+      {social.map((s) => (
+        <li>
+          <a
+            href={s.href}
+            class="grid size-11 place-items-center rounded-md text-muted transition-colors duration-150 hover:text-accent"
+            aria-label={s.label}
+            {...(s.href.startsWith('http') && { target: '_blank', rel: 'noopener noreferrer' })}
+          >
+            <Icon name={s.icon} size={18} />
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+  <div class="mx-auto max-w-5xl px-4 pb-10 sm:px-6">
+    <p class="font-mono text-xs text-muted">
+      © {year} {SITE.name} · Built with Astro
+    </p>
+  </div>
+</footer>

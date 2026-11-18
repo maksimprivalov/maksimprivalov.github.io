@@ -1,0 +1,125 @@
+---
+import { SITE } from '../config';
+import { url } from '../lib/url';
+import Icon from './ui/Icon.astro';
+import StatusBadge from './ui/StatusBadge.astro';
+
+const current = Astro.url.pathname.replace(/\/+$/, '');
+const items = SITE.nav.map((item) => {
+  const href = url(item.path);
+  // Anchors on the home page are never "current"; page links are when the path matches.
+  const isCurrent = !item.path.startsWith('#') && current === href.replace(/\/+$/, '');
+  return { ...item, href, isCurrent };
+});
+---
+
+<header class="sticky top-0 z-50 px-3 pt-3 sm:px-4 sm:pt-4">
+  <div
+    class="mx-auto max-w-5xl rounded-lg border border-line bg-bg/80 shadow-[0_8px_24px_-12px_rgb(0_0_0/0.6)] backdrop-blur-md"
+    data-nav
+  >
+    <div class="flex h-14 items-center gap-4 pr-1.5 pl-4">
+      <a
+        href={url()}
+        class="flex items-center gap-2.5 rounded-md text-sm font-medium tracking-tight transition-colors duration-150 hover:text-accent"
+      >
+        <span
+          class="grid size-7 place-items-center rounded-sm border border-line font-mono text-[11px] font-bold text-accent"
+          aria-hidden="true"
+        >
+          MP
+        </span>
+        <span>{SITE.name}</span>
+      </a>
+
+      <nav aria-label="Main" class="ml-auto hidden md:block">
+        <ul class="flex items-center gap-1">
+          {items.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                aria-current={item.isCurrent ? 'page' : undefined}
+                class:list={[
+                  'inline-flex h-10 items-center rounded-md px-3 text-sm transition-colors duration-150 hover:text-text',
+                  item.isCurrent
+                    ? 'text-text underline decoration-accent decoration-2 underline-offset-[6px]'
+                    : 'text-muted',
+                ]}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <div class="hidden border-l border-line pr-3 pl-4 lg:block">
+        <StatusBadge />
+      </div>
+
+      <button
+        type="button"
+        class="ml-auto grid size-11 place-items-center rounded-md text-muted transition-colors duration-150 hover:text-text md:hidden"
+        aria-expanded="false"
+        aria-controls="mobile-nav"
+        data-nav-toggle
+      >
+        <span class="sr-only">Menu</span>
+        <Icon name="menu" size={20} class="nav-icon-open" />
+        <Icon name="x" size={20} class="nav-icon-close hidden" />
+      </button>
+    </div>
+
+    <nav id="mobile-nav" aria-label="Main (mobile)" class="hidden border-t border-line md:hidden">
+      <ul class="flex flex-col p-2">
+        {items.map((item) => (
+          <li>
+            <a
+              href={item.href}
+              aria-current={item.isCurrent ? 'page' : undefined}
+              class:list={[
+                'flex h-11 items-center rounded-md px-3 text-[15px] transition-colors duration-150 hover:bg-white/[0.03] hover:text-text',
+                item.isCurrent ? 'text-text' : 'text-muted',
+              ]}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <div class="border-t border-line px-5 py-4">
+        <StatusBadge />
+      </div>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const toggle = document.querySelector<HTMLButtonElement>('[data-nav-toggle]');
+  const panel = document.getElementById('mobile-nav');
+
+  if (toggle && panel) {
+    const setOpen = (open: boolean) => {
+      toggle.setAttribute('aria-expanded', String(open));
+      panel.classList.toggle('hidden', !open);
+      toggle.querySelector('.nav-icon-open')?.classList.toggle('hidden', open);
+      toggle.querySelector('.nav-icon-close')?.classList.toggle('hidden', !open);
+    };
+
+    toggle.addEventListener('click', () =>
+      setOpen(toggle.getAttribute('aria-expanded') !== 'true'),
+    );
+    panel.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('a')) setOpen(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+    window.matchMedia('(min-width: 768px)').addEventListener('change', (e) => {
+      if (e.matches) setOpen(false);
+    });
+  }
+</script>
