@@ -2,6 +2,11 @@
 @import '@fontsource-variable/geist';
 @import '@fontsource-variable/jetbrains-mono';
 
+/*
+ * Design system implementation. Source of truth for the rules:
+ * design-system/maksim-privalov/MASTER.md
+ */
+
 /* Size-adjusted fallbacks so the font swap causes no layout shift. */
 @font-face {
   font-family: 'Geist Fallback';
@@ -20,14 +25,22 @@
   line-gap-override: 0%;
 }
 
-/* Fixed palette (see CLAUDE.md). Phase 2 extends these tokens. */
+/* ---------- Tokens ---------- */
 :root {
+  /* Fixed palette (CLAUDE.md). */
   --bg: #161616;
   --line: #262626;
   --muted: #8a8a8a;
   --text: #ededed;
   --accent: #10b981;
   --accent-hover: #34d399;
+  /* Semantic extension: failure states only. */
+  --danger: #f87171;
+
+  --dur-fast: 150ms;
+  --dur: 250ms;
+  --dur-slow: 500ms;
+
   color-scheme: dark;
 }
 
@@ -38,32 +51,283 @@
   --color-text: var(--text);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
+  --color-danger: var(--danger);
+
   --font-sans: 'Geist Variable', 'Geist Fallback', ui-sans-serif, system-ui, sans-serif;
   --font-mono:
     'JetBrains Mono Variable', 'JetBrains Mono Fallback', ui-monospace, SFMono-Regular, monospace;
 }
 
+@theme {
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---------- Base ---------- */
 @layer base {
   html {
     background: var(--bg);
     color: var(--text);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-padding-top: 6rem; /* anchors land below the sticky header */
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
   body {
     background: var(--bg);
     min-height: 100dvh;
+    line-height: 1.65;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  a,
+  button,
+  summary,
+  [role='button'] {
+    cursor: pointer;
   }
   :focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 3px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
   }
   ::selection {
     background: color-mix(in srgb, var(--accent) 35%, transparent);
+    color: var(--text);
   }
-  .tabular {
-    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Typography utilities ---------- */
+@utility text-display {
+  font-size: clamp(2.5rem, 7vw, 4.5rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+}
+@utility text-h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+@utility text-h2 {
+  font-size: clamp(1.75rem, 3.5vw, 2.25rem);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+@utility text-h3 {
+  font-size: clamp(1.125rem, 1.6vw, 1.25rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+@utility text-lead {
+  font-size: clamp(1.0625rem, 1.6vw, 1.25rem);
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--text) 85%, transparent);
+}
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Components ---------- */
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding-inline: 1.25rem;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    transition:
+      background-color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg); /* never white: 2.54:1 */
+  }
+  .btn-primary:hover {
+    background: var(--accent-hover);
+  }
+  .btn-secondary {
+    border-color: var(--line);
+    color: var(--text);
+  }
+  .btn-secondary:hover {
+    border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+    color: var(--accent);
+  }
+  .btn-ghost {
+    color: var(--muted);
+    padding-inline: 0.75rem;
+  }
+  .btn-ghost:hover {
+    color: var(--text);
+  }
+
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      background-color var(--dur-fast) var(--ease-out);
+  }
+  a.card:hover,
+  a.card:focus-visible {
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    background: rgb(255 255 255 / 0.02);
+  }
+  .card .card-title {
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  a.card:hover .card-title,
+  a.card:focus-visible .card-title {
+    color: var(--accent);
+  }
+  .card .card-arrow {
+    color: var(--muted);
+    transition:
+      transform var(--dur) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+  a.card:hover .card-arrow,
+  a.card:focus-visible .card-arrow {
+    color: var(--accent);
+    transform: translate(2px, -2px);
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    border: 1px solid var(--line);
+    border-radius: 9999px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1.2;
+    color: var(--muted); /* on --bg: 5.24:1. Never on a --line fill. */
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out);
+  }
+  a.tag:hover {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+
+  .link {
+    color: var(--text);
+    text-decoration-line: underline;
+    text-decoration-color: color-mix(in srgb, var(--accent) 60%, transparent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      text-decoration-color var(--dur-fast) var(--ease-out);
+  }
+  .link:hover {
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px;
+  }
+
+  /* The one emerald glow per view (behind the hero). */
+  .glow {
+    pointer-events: none;
+    position: absolute;
+    width: min(56rem, 120vw);
+    aspect-ratio: 1;
+    border-radius: 9999px;
+    background: radial-gradient(
+      closest-side,
+      color-mix(in srgb, var(--accent) 12%, transparent),
+      transparent
+    );
+    filter: blur(8px);
+  }
+
+  .skip-link {
+    position: absolute;
+    left: 1rem;
+    top: -4rem;
+    z-index: 100;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    background: var(--accent);
+    color: var(--bg);
+    font-weight: 500;
+    transition: top var(--dur) var(--ease-out);
+  }
+  .skip-link:focus-visible {
+    top: 1rem;
+  }
+}
+
+/* ---------- Motion ---------- */
+/* Reveal: hidden state only when JS is running and motion is allowed. */
+@media (prefers-reduced-motion: no-preference) {
+  html.js [data-reveal] {
+    opacity: 0;
+    transform: translateY(12px);
+    transition:
+      opacity var(--dur-slow) var(--ease-out),
+      transform var(--dur-slow) var(--ease-out);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  html.js [data-reveal].is-visible {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes status-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  70%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
   }
 }
 
