@@ -84,7 +84,12 @@ Contrast notes:
 - **Text on emerald buttons must be `#161616`, never white.** White on `#10B981` is only ≈ 2.5:1 and fails.
 
 ### Using the ui-ux-pro-max skill
-The skill is installed in this project (`.claude/skills/ui-ux-pro-max/`, requires Python 3).
+The skill is installed as a Claude Code plugin (`ui-ux-pro-max@ui-ux-pro-max-skill`, requires Python 3).
+
+> **Binding design system:** [`design-system/maksim-privalov/MASTER.md`](design-system/maksim-privalov/MASTER.md),
+> with per-page overrides in `design-system/maksim-privalov/pages/` (`home.md`, `project.md`, `blog-post.md`).
+> Read MASTER.md (and the page override, if any) before any UI work. Tokens and component classes are
+> implemented in `src/styles/global.css` and `src/components/ui/`; live specimen at `/styleguide`.
 1. **Before writing any UI code**, use ui-ux-pro-max to generate a design system for a *"dark minimal fintech developer portfolio"* and persist it to files (master file + per-page overrides).
 2. In that design system, **replace the generated colors with the palette above**. Keep its guidance on typography scale, spacing, radii, shadows/glow, motion and components where it fits the coffer.so-style look.
 3. Treat the persisted master design-system file as binding for all UI work, in every session. Reference it from this file once it exists.
