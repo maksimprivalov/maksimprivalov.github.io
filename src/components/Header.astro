@@ -1,5 +1,7 @@
 ---
+import { Image } from 'astro:assets';
 import { SITE } from '../config';
+import avatar from '../assets/avatar.jpg';
 import { url } from '../lib/url';
 import Icon from './ui/Icon.astro';
 import StatusBadge from './ui/StatusBadge.astro';
@@ -23,12 +25,15 @@ const items = SITE.nav.map((item) => {
         href={url()}
         class="flex items-center gap-2.5 rounded-md text-sm font-medium tracking-tight transition-colors duration-150 hover:text-accent"
       >
-        <span
-          class="grid size-7 place-items-center rounded-sm border border-line font-mono text-[11px] font-bold text-accent"
-          aria-hidden="true"
-        >
-          MP
-        </span>
+        <Image
+          src={avatar}
+          alt=""
+          width={32}
+          height={32}
+          densities={[1, 2]}
+          loading="eager"
+          class="size-8 rounded-full object-cover ring-1 ring-line"
+        />
         <span>{SITE.name}</span>
       </a>
 

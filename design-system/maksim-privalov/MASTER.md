@@ -162,7 +162,7 @@ header pill's soft dark shadow so it separates from content while scrolling.
 ### Header (`Header.astro`)
 
 - Sticky, floating pill (coffer-style): `max-w-5xl`, `--radius-lg`, `bg/80` + backdrop blur, `border-line`, height 56px.
-- Left: `MP` monogram + name. Center/right: nav `Projects · Experience · Writing · CV · Contact` (muted → text on
+- Left: round photo avatar (`src/assets/avatar.jpg`, cropped from `cv/photo.jpg`) + name. Center/right: nav `About · Projects · Experience · Writing · CV · Contact` (muted → text on
   hover; `aria-current` gets text + accent underline). Right: status badge (lg+).
 - Below `md`: menu button (44×44, `aria-expanded`, `aria-controls`) opens a panel inside the pill;
   Escape and link click close it.
