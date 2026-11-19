@@ -20,6 +20,7 @@ export const SITE = {
   linkedin: 'https://www.linkedin.com/in/maksim-privalov-1479a1263',
   /** Header navigation; paths are passed through url(). */
   nav: [
+    { label: 'About', path: '#about' },
     { label: 'Projects', path: '#projects' },
     { label: 'Experience', path: '#experience' },
     { label: 'Writing', path: '#writing' },

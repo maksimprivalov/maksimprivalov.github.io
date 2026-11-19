@@ -13,7 +13,7 @@ export interface MoreProject {
 export const moreProjects: MoreProject[] = [
   {
     name: 'CopyBot',
-    stack: 'Java · Spring · Python/Flask · PostgreSQL',
+    stack: 'Java, Spring, Python/Flask, PostgreSQL',
     summary:
       'Commercialized Telegram bot for cross-posting between social networks, launched in 2024.',
   },
@@ -25,7 +25,7 @@ export const moreProjects: MoreProject[] = [
   },
   {
     name: 'Ollama code completion for IntelliJ',
-    stack: 'Java · IntelliJ Platform',
+    stack: 'Java, IntelliJ Platform',
     summary:
       'Inline code completion plugin using Starcoder2 via Ollama, with Trie-based caching for fast local suggestions.',
     href: 'https://github.com/maksimprivalov/ollamacompletion',

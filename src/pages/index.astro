@@ -21,7 +21,7 @@ const more = [
     .filter((p) => !p.data.featured)
     .map((p) => ({
       name: p.data.title,
-      stack: p.data.tech.slice(0, 3).join(' · '),
+      stack: p.data.tech.slice(0, 3).join(', '),
       summary: p.data.summary,
       href: url(`projects/${p.id}`),
     })),
@@ -33,6 +33,15 @@ const stats = [
   { value: '~86%', label: 'less server RAM after a multi-tenant redesign' },
   { value: '50,000+', label: 'users on the platform I build for' },
   { value: 'Σ = 0', label: 'double-entry ledger behind my payment saga' },
+];
+
+// Key facts next to the bio, from cv/main.tex.
+const about = [
+  { label: 'Based in', value: cv.location },
+  { label: 'Focus', value: 'Payments, ledgers, distributed systems' },
+  { label: 'Core stack', value: 'Java, Kotlin, Spring Boot, Rust' },
+  { label: 'Education', value: 'BSc Software Engineering (GPA 9/10), now MSc at FTN Novi Sad' },
+  { label: 'Languages', value: cv.languages.join(', ') },
 ];
 ---
 
@@ -46,9 +55,13 @@ const stats = [
           <h1 id="hero-title" class="text-display mt-8 lg:mt-0" data-reveal>
             {SITE.name}
           </h1>
-          <p class="mt-4 font-mono text-sm text-muted" data-reveal style="--reveal-delay: 60ms">
-            <span class="whitespace-nowrap">Backend Engineer · FinTech</span>
-            <span class="whitespace-nowrap">· {cv.location}</span>
+          <p
+            class="mt-4 flex flex-wrap gap-x-5 gap-y-1 font-mono text-sm text-muted"
+            data-reveal
+            style="--reveal-delay: 60ms"
+          >
+            <span class="whitespace-nowrap">Backend Engineer, FinTech</span>
+            <span class="border-l border-line pl-5 whitespace-nowrap">{cv.location}</span>
           </p>
           <p class="text-lead mt-6 max-w-xl" data-reveal style="--reveal-delay: 120ms">
             {cv.tagline} I work mostly in Java and Spring Boot, and build payment infrastructure in
@@ -93,11 +106,57 @@ const stats = [
     </Container>
   </section>
 
+  <!-- About -->
+  <section id="about" aria-labelledby="about-title" class="border-t border-line">
+    <Container class="py-20 md:py-28">
+      <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-16">
+        <div data-reveal>
+          <SectionHeading index="01" label="About" title="A short bio" id="about-title" />
+          <div class="mt-8 max-w-2xl space-y-5 text-[1.0625rem] leading-relaxed text-text/90">
+            <p>
+              I'm a backend engineer in Novi Sad, Serbia, and I work on FinTech systems: payments,
+              ledgers and the services around them. Most of my production work is in Java and Spring
+              Boot; my payment side projects are in Rust.
+            </p>
+            <p>
+              At the Faculty of Technical Sciences in Novi Sad I build a platform used by 50,000+
+              people. I redesigned it as a multi-tenant system, which cut server RAM by about 86%,
+              and moved a Windows-only document-signing system to macOS and Linux with Java PKCS#11.
+              Before that, at Digital Access Logic, I integrated payments through a bank API broker
+              and automated fiscal receipts.
+            </p>
+            <p>
+              The problems I like most are the ones where money must never be lost or counted twice:
+              sagas, idempotency and double-entry ledgers. My
+              <a href={url('projects/payment-processing-service')} class="link">
+                Payment Processing Service
+              </a>{' '}
+              is built around exactly that.
+            </p>
+          </div>
+        </div>
+
+        <dl
+          class="h-fit divide-y divide-line self-start rounded-lg border border-line text-sm lg:mt-2"
+          data-reveal
+          style="--reveal-delay: 80ms"
+        >
+          {about.map((f) => (
+            <div class="grid gap-1 p-4">
+              <dt class="eyebrow">{f.label}</dt>
+              <dd class="text-text/90">{f.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </Container>
+  </section>
+
   <!-- Projects -->
   <section id="projects" aria-labelledby="projects-title" class="border-t border-line">
     <Container class="py-20 md:py-28">
       <div data-reveal>
-        <SectionHeading index="01" label="Projects" title="Selected work" id="projects-title">
+        <SectionHeading index="02" label="Projects" title="Selected work" id="projects-title">
           Payments, risk and data systems, each with a write-up of the architecture and the
           decisions behind it.
         </SectionHeading>
@@ -166,7 +225,7 @@ const stats = [
     <Container class="py-20 md:py-28">
       <div data-reveal>
         <SectionHeading
-          index="02"
+          index="03"
           label="Experience"
           title="Where I've worked"
           id="experience-title"
@@ -181,10 +240,9 @@ const stats = [
           >
             <p class="tabular font-mono text-sm text-muted md:pt-0.5">{job.dates}</p>
             <div>
-              <h3 class="text-h3">
-                {job.role} <span class="text-muted">·</span> {job.org}
-              </h3>
-              <p class="mt-1 text-sm text-muted">{job.location}</p>
+              <h3 class="text-h3">{job.role}</h3>
+              <p class="mt-1 text-[0.9375rem] text-text/90">{job.org}</p>
+              <p class="mt-0.5 text-sm text-muted">{job.location}</p>
               <ul class="mt-4 space-y-2.5 text-[0.9375rem] leading-relaxed text-text/90">
                 {job.highlights.map((h) => (
                   <li class="relative pl-5">
@@ -222,7 +280,7 @@ const stats = [
     <Container class="py-20 md:py-28">
       <div data-reveal>
         <SectionHeading
-          index="03"
+          index="04"
           label="Writing"
           title="Notes on payments engineering"
           id="writing-title"
@@ -237,7 +295,7 @@ const stats = [
   <section id="contact" aria-labelledby="contact-title" class="border-t border-line">
     <Container class="py-20 md:py-28">
       <div data-reveal>
-        <SectionHeading index="04" label="Contact" title="Let's talk" id="contact-title">
+        <SectionHeading index="05" label="Contact" title="Let's talk" id="contact-title">
           I'm open to backend and FinTech roles. Email is the fastest way to reach me.
         </SectionHeading>
         <p class="mt-8 font-mono text-sm">

@@ -126,7 +126,7 @@ Header navigation: Projects · Experience · Writing · CV · Contact.
 
 ## Hero animation: "Live Ledger"
 > **Status (2026-11-18):** at my request the hero currently shows `src/components/BinaryCoin.astro`
-> (a coin drawn in 0s and 1s, Canvas 2D, ~1.5 KB gzip). Whether the Live Ledger replaces it, sits
+> (a coin drawn in 0s and 1s with $, €, £ and ₿ faces, drag to spin, Canvas 2D, ~2 KB gzip). Whether the Live Ledger replaces it, sits
 > next to it, or moves to the Payment Processing project page is still open.
 
 A small interactive canvas next to (or behind) the hero text that visualizes **double-entry bookkeeping**. It teases my Payment Processing project.

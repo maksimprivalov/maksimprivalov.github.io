@@ -188,6 +188,9 @@ header pill's soft dark shadow so it separates from content while scrolling.
 - Skip link "Skip to content" as the first focusable element.
 - Touch targets ≥ 44×44px; ≥ 8px between adjacent targets.
 - `prefers-reduced-motion`: disable reveal, ping, particle animation; show final state.
+  Exception: the hero coin keeps a slow turn (0.25 rad/s, almost no bit flicker, no hover speed-up),
+  because many Windows machines report reduced motion by default and the hero looked broken there.
+- Separators: no middle dots (`·`) in visible copy; use commas, a line break or a `--line` divider.
 - Landmarks: `header`, `nav[aria-label]`, `main#main`, `footer`. Canvas visuals `aria-hidden` + text alternative.
 
 ---

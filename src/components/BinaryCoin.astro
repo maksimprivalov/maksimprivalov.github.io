@@ -1,8 +1,10 @@
 ---
 /**
  * Hero visual: a coin made of 0s and 1s, spinning about its vertical axis.
- * Faces show currency symbols, the rim and edge are drawn in bits, and bits flip over time.
- * Canvas 2D, no dependencies. Pauses off-screen and in hidden tabs; static under reduced motion.
+ * Faces cycle through $, €, £ and ₿; the rim and edge are drawn in bits, and bits flip over time.
+ * Drag (mouse or touch) to spin it; a flick keeps it spinning with inertia.
+ * Canvas 2D, no dependencies. Pauses off-screen and in hidden tabs.
+ * Under prefers-reduced-motion it still turns, but slowly and without the bit flicker.
  */
 interface Props {
   class?: string;
@@ -11,73 +13,119 @@ interface Props {
 const { class: className } = Astro.props;
 ---
 
-<div class:list={['relative aspect-square w-full', className]} data-binary-coin>
+<div
+  class:list={[
+    'relative aspect-square w-full cursor-grab touch-pan-y select-none active:cursor-grabbing',
+    className,
+  ]}
+  data-binary-coin
+>
   <canvas class="absolute inset-0 size-full" aria-hidden="true"></canvas>
+  <p
+    class="pointer-events-none absolute inset-x-0 bottom-0 text-center font-mono text-xs text-muted transition-opacity duration-500"
+    aria-hidden="true"
+    data-coin-hint
+  >
+    drag to spin
+  </p>
   <p class="sr-only">
-    Decorative animation: a coin made of binary digits, zeros and ones, rotating and showing
-    currency symbols on its faces.
+    Decorative animation: a coin made of binary digits, zeros and ones, rotating and showing the
+    dollar, euro, pound and bitcoin symbols on its faces.
   </p>
 </div>
 
 <script>
-  const SYMBOLS = ['$', '€', '£'];
-  const COLOR = { accent: '16 185 129', text: '237 237 237', muted: '138 138 138' };
+  type Glyph = (ctx: CanvasRenderingContext2D, size: number) => void;
+
   const MASK = 64; // symbol mask resolution
   const FPS = 30;
+  const COLOR = { accent: [16, 185, 129], text: [237, 237, 237], muted: [138, 138, 138] };
+  const FONT = '"Geist Variable", Arial, sans-serif';
 
-  type Cell = { bit: 0 | 1 };
+  const text =
+    (symbol: string): Glyph =>
+    (ctx, size) => {
+      ctx.font = `800 ${size * 0.66}px ${FONT}`;
+      ctx.fillText(symbol, size / 2, size / 2 + size * 0.03);
+    };
 
-  function symbolMask(symbol: string): Uint8Array {
+  // ₿ is missing from many fonts (Geist and Arial included), so draw it: a B with two strokes
+  // through its top and bottom.
+  const bitcoin: Glyph = (ctx, size) => {
+    const y = size / 2 + size * 0.03;
+    ctx.font = `800 ${size * 0.6}px ${FONT}`;
+    ctx.fillText('B', size / 2, y);
+    const m = ctx.measureText('B');
+    const left = size / 2 - m.actualBoundingBoxLeft;
+    const w = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
+    const top = y - m.actualBoundingBoxAscent;
+    const bottom = y + m.actualBoundingBoxDescent;
+    const bar = Math.max(2, w * 0.14);
+    const ext = size * 0.09;
+    for (const at of [0.24, 0.52]) {
+      const x = left + w * at;
+      ctx.fillRect(x, top - ext, bar, ext + 1);
+      ctx.fillRect(x, bottom - 1, bar, ext + 1);
+    }
+  };
+
+  const GLYPHS: Glyph[] = [text('$'), text('€'), text('£'), bitcoin];
+
+  function glyphMask(glyph: Glyph): Uint8Array {
     const c = document.createElement('canvas');
     c.width = c.height = MASK;
     const ctx = c.getContext('2d', { willReadFrequently: true })!;
     ctx.fillStyle = '#fff';
-    ctx.font = `800 ${MASK * 0.66}px "Geist Variable", Arial, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(symbol, MASK / 2, MASK / 2 + MASK * 0.03);
+    glyph(ctx, MASK);
     const data = ctx.getImageData(0, 0, MASK, MASK).data;
     const mask = new Uint8Array(MASK * MASK);
     for (let i = 0; i < mask.length; i++) mask[i] = data[i * 4 + 3]! > 100 ? 1 : 0;
     return mask;
   }
 
+  // rgba() with commas: the space-separated rgb(r g b / a) form fails silently in older
+  // browsers' canvas, which would leave every digit black on the dark background.
+  const rgba = (c: number[], a: number) => `rgba(${c[0]},${c[1]},${c[2]},${a.toFixed(3)})`;
+
   async function init(root: HTMLElement) {
     const canvas = root.querySelector('canvas')!;
-    const ctx = canvas.getContext('2d')!;
+    const hint = root.querySelector<HTMLElement>('[data-coin-hint]');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    await document.fonts.ready;
-    const masks = SYMBOLS.map(symbolMask);
+    // Wait for the web fonts, but never block the coin on a slow network.
+    await Promise.race([document.fonts?.ready, new Promise((r) => setTimeout(r, 1500))]);
+    const masks = GLYPHS.map(glyphMask);
 
     let cols = 0;
     let rows = 0;
     let cell = 0;
     let width = 0;
     let height = 0;
-    let cells: Cell[] = [];
+    let bits = new Uint8Array(0);
 
     function resize() {
       ({ width, height } = root.getBoundingClientRect());
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
       // ~46 cells across: enough resolution for a readable symbol, still cheap to draw.
       cell = Math.min(10, Math.max(7, width / 46));
       cols = Math.floor(width / cell);
       rows = Math.floor(height / cell);
-      cells = Array.from({ length: cols * rows }, () => ({
-        bit: Math.random() < 0.5 ? 0 : 1,
-      }));
-      ctx.font = `500 ${cell * 0.92}px "JetBrains Mono Variable", ui-monospace, monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      bits = Uint8Array.from({ length: cols * rows }, () => (Math.random() < 0.5 ? 0 : 1));
+      ctx!.font = `500 ${cell * 0.92}px "JetBrains Mono Variable", ui-monospace, monospace`;
+      ctx!.textAlign = 'center';
+      ctx!.textBaseline = 'middle';
     }
 
     // theta: rotation about the vertical axis; flip: probability a bit flips per frame.
     function draw(theta: number, flip: number) {
-      ctx.clearRect(0, 0, width, height);
+      ctx!.clearRect(0, 0, width, height);
 
       const R = Math.min(cols, rows) * 0.4; // coin radius, in cells
       const cos = Math.cos(theta);
@@ -98,8 +146,8 @@ const { class: className } = Astro.props;
         const y = row - cy + 0.5;
         const half = Math.abs(y) <= R ? Math.sqrt(R * R - y * y) : -1; // face half-width before rotation
         for (let col = 0; col < cols; col++) {
-          const c = cells[row * cols + col]!;
-          if (flip && Math.random() < flip) c.bit = c.bit ? 0 : 1;
+          const i = row * cols + col;
+          if (flip && Math.random() < flip) bits[i] = bits[i] ? 0 : 1;
 
           const x = col - cx + 0.5 + thick / 2;
           let rgb = COLOR.muted;
@@ -140,38 +188,47 @@ const { class: className } = Astro.props;
             if (alpha <= 0.01) continue;
           }
 
-          ctx.fillStyle = `rgb(${rgb} / ${alpha.toFixed(3)})`;
-          ctx.fillText(c.bit ? '1' : '0', ox + col * cell, oy + row * cell);
+          ctx!.fillStyle = rgba(rgb, alpha);
+          ctx!.fillText(bits[i] ? '1' : '0', ox + col * cell, oy + row * cell);
         }
       }
     }
 
     resize();
 
-    if (reduced) {
-      draw(-0.45, 0);
-      new ResizeObserver(() => {
-        resize();
-        draw(-0.45, 0);
-      }).observe(root);
-      return;
-    }
+    // Reduced motion: a slow, steady turn with almost no flicker, and no hover speed-up.
+    const BASE = reduced ? 0.25 : 0.55; // rad/s
+    const FAST = reduced ? BASE : 1.8;
+    const FLIP = reduced ? 0.003 : 0.02;
 
     let theta = -0.45;
-    let speed = 0.55; // rad/s
-    let target = 0.55;
+    let speed = BASE;
+    let target = BASE;
+    let dir = 1; // spin direction follows the last flick
     let last = 0;
     let raf = 0;
     let visible = false;
+    let hovering = false;
+
+    // Drag state.
+    let dragging = false;
+    let dragX = 0;
+    let dragT = 0;
+    let velocity = 0;
 
     function frame(now: number) {
       raf = requestAnimationFrame(frame);
       if (now - last < 1000 / FPS) return;
       const dt = last ? Math.min((now - last) / 1000, 0.1) : 0;
       last = now;
-      speed += (target - speed) * 0.08;
-      theta += speed * dt;
-      draw(theta, target > 1 ? 0.06 : 0.02);
+      if (!dragging) {
+        target = dir * (hovering ? FAST : BASE);
+        // Ease toward the target speed; a flick bleeds off over roughly a second.
+        speed += (target - speed) * (1 - Math.exp(-dt * 1.6));
+        theta += speed * dt;
+      }
+      const fast = dragging || Math.abs(speed) > 1;
+      draw(theta, fast && !reduced ? 0.06 : FLIP);
     }
 
     const start = () => {
@@ -185,20 +242,65 @@ const { class: className } = Astro.props;
       raf = 0;
     };
 
-    new IntersectionObserver(([entry]) => {
-      visible = entry!.isIntersecting;
-      if (visible) start();
-      else stop();
-    }).observe(root);
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(([entry]) => {
+        visible = entry!.isIntersecting;
+        if (visible) start();
+        else stop();
+      }).observe(root);
+    } else {
+      visible = true;
+      start();
+    }
     document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
-    new ResizeObserver(() => {
-      resize();
-      draw(theta, 0);
-    }).observe(root);
+    if ('ResizeObserver' in window) {
+      new ResizeObserver(() => {
+        resize();
+        draw(theta, 0);
+      }).observe(root);
+    }
+    draw(theta, 0);
 
     // Hover: spin faster and flip more bits.
-    root.addEventListener('pointerenter', () => (target = 1.8));
-    root.addEventListener('pointerleave', () => (target = 0.55));
+    root.addEventListener('pointerenter', (e) => {
+      if (e.pointerType === 'mouse') hovering = true;
+    });
+    root.addEventListener('pointerleave', () => (hovering = false));
+
+    // Drag to spin. Horizontal drags turn the coin; vertical swipes still scroll the page
+    // (touch-action: pan-y on the root).
+    root.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      dragging = true;
+      dragX = e.clientX;
+      dragT = performance.now();
+      velocity = 0;
+      root.setPointerCapture(e.pointerId);
+      if (hint) hint.style.opacity = '0';
+    });
+    root.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const now = performance.now();
+      // A drag across the full coin is about one and a half turns.
+      const dTheta = ((e.clientX - dragX) / Math.max(width, 1)) * Math.PI * 1.6;
+      const dt = Math.max((now - dragT) / 1000, 0.001);
+      theta += dTheta;
+      velocity = velocity * 0.6 + (dTheta / dt) * 0.4;
+      dragX = e.clientX;
+      dragT = now;
+    });
+    const release = () => {
+      if (!dragging) return;
+      dragging = false;
+      // Stale velocity (the pointer stopped before release) should not fling the coin.
+      if (performance.now() - dragT > 80) velocity = 0;
+      speed = Math.max(-14, Math.min(14, velocity));
+      if (Math.abs(speed) > 0.05) dir = Math.sign(speed);
+    };
+    root.addEventListener('pointerup', release);
+    root.addEventListener('pointercancel', release);
+    root.addEventListener('lostpointercapture', release);
   }
 
   document.querySelectorAll<HTMLElement>('[data-binary-coin]').forEach((el) => void init(el));
